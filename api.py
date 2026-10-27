@@ -38,7 +38,7 @@ else:
 # ── Single shared LLM instance (no second SentenceTransformer load) ──────────
 _llm = ChatGroq(
     groq_api_key=os.getenv("GROQ_API_KEY", ""),
-    model_name="llama3-8b-8192",   # fast, reliable Groq model
+    model_name="openai/gpt-oss-20b",
 )
 print("[INFO] Groq LLM ready.")
 
