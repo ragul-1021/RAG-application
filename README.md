@@ -145,7 +145,7 @@ Open `frontend/index.html` in your browser or serve the frontend using your conf
 
 ## 👨‍💻 Author
 
-**Ragul AR**
+**Ragul B**
 
 GitHub: [@ragul-1021](https://github.com/ragul-1021)
 
