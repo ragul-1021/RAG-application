@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Knowledge Assistant</title>
+  <meta name="description" content="An intelligent document question-answering assistant powered by Retrieval-Augmented Generation (RAG) and Groq LLM." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Animated Background ── -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="17" stroke="url(#g1)" stroke-width="2"/>
+            <path d="M10 18 Q18 8 26 18 Q18 28 10 18Z" fill="url(#g2)" opacity="0.85"/>
+            <circle cx="18" cy="18" r="4" fill="white"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="36" y2="36">
+                <stop stop-color="#a78bfa"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="10" y1="8" x2="26" y2="28">
+                <stop stop-color="#818cf8"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">RAG<span class="logo-accent">Assistant</span></span>
+      </div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        <span>Groq · LLaMA · FAISS</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1 class="hero-title">Ask anything about<br/><span class="gradient-text">your documents</span></h1>
+      <p class="hero-sub">Powered by FAISS vector search &amp; Groq LLM — get precise, context-aware answers instantly.</p>
+    </section>
+
+    <!-- Search Card -->
+    <div class="search-card glass" id="search-card">
+      <form id="query-form" autocomplete="off">
+        <div class="input-row">
+          <div class="input-wrap">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </span>
+            <input
+              id="query-input"
+              type="text"
+              placeholder="e.g. What is harmony in a family?"
+              aria-label="Your question"
+              required
+            />
+            <button
+              type="button"
+              id="clear-btn"
+              class="clear-btn"
+              aria-label="Clear input"
+              title="Clear"
+              style="display:none"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="topk-wrap">
+            <label for="top-k-select" class="topk-label">Sources</label>
+            <select id="top-k-select" aria-label="Number of source chunks">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="7">7</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+
+          <button type="submit" id="ask-btn" class="ask-btn" aria-label="Ask">
+            <span class="btn-text">Ask</span>
+            <span class="btn-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Suggestion chips -->
+        <div class="chips" id="chips">
+          <button type="button" class="chip" data-q="What is harmony in a family?">Harmony in a family</button>
+          <button type="button" class="chip" data-q="How to improve communication in relationships?">Communication in relationships</button>
+          <button type="button" class="chip" data-q="What are the key principles of human values?">Key principles of human values</button>
+          <button type="button" class="chip" data-q="How to manage emotions effectively?">Managing emotions</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results area -->
+    <div id="results-area" class="results-area" aria-live="polite"></div>
+
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="footer">
+    <span>Built with FAISS &middot; sentence-transformers &middot; Groq &middot; Flask</span>
+  </footer>
+
+  <!-- ── Answer Template (hidden, cloned by JS) ── -->
+  <template id="result-template">
+    <div class="result-card glass">
+      <!-- Header -->
+      <div class="result-header">
+        <div class="result-header-left">
+          <div class="result-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <span class="result-query-label">Answer</span>
+        </div>
+        <div class="result-meta">
+          <span class="result-elapsed"></span>
+        </div>
+      </div>
+
+      <!-- Answer text -->
+      <div class="result-answer"></div>
+
+      <!-- Sources accordion -->
+      <details class="sources-details" id="">
+        <summary class="sources-summary">
+          <span class="sources-count"></span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </summary>
+        <div class="sources-list"></div>
+      </details>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

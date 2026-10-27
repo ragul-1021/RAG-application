@@ -1,0 +1,30 @@
+[project]
+name = "ragapplication"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ragul-1021", email = "ragulpradhive10@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "chromadb",
+    "faiss-cpu",
+    "flask>=3.1.3",
+    "flask-cors>=6.0.5",
+    "langchain",
+    "langchain-community",
+    "langchain-core",
+    "langchain-groq",
+    "pymupdf",
+    "pypdf",
+    "python-dotenv",
+    "sentence-transformers",
+]
+
+[project.scripts]
+ragapplication = "ragapplication:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
