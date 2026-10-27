@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets – never commit
+.env
+
+# FAISS binary index (large files, rebuilt locally)
+faiss_store/

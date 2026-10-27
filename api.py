@@ -10,16 +10,17 @@ if _src not in sys.path:
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
 from ragapplication.vector_store import FaissVectorStore
-from ragapplication.search import RAGSearch
+from ragapplication.data_loader import load_all_documents
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 CORS(app)
 
-# ── Bootstrap the vector store once at startup ──────────────────────────────
+# ── Bootstrap the vector store ONCE at startup ──────────────────────────────
 PERSIST_DIR = "faiss_store"
 _store = FaissVectorStore(PERSIST_DIR)
 faiss_path = os.path.join(PERSIST_DIR, "faiss.index")
@@ -30,12 +31,38 @@ if os.path.exists(faiss_path) and os.path.exists(meta_path):
     _store.load()
 else:
     print("[INFO] Building FAISS index from documents...")
-    from ragapplication.data_loader import load_all_documents
     docs = load_all_documents("pageindex")
     _store.build_from_documents(docs)
     _store.save()
 
-_rag = RAGSearch()
+# ── Single shared LLM instance (no second SentenceTransformer load) ──────────
+_llm = ChatGroq(
+    groq_api_key=os.getenv("GROQ_API_KEY", ""),
+    model_name="llama3-8b-8192",   # fast, reliable Groq model
+)
+print("[INFO] Groq LLM ready.")
+
+
+def _summarize(query: str, top_k: int = 5) -> str:
+    """Retrieve context from FAISS then ask the LLM."""
+    results = _store.query(query, top_k=top_k)
+    texts = [
+        r["metadata"].get("text", "")
+        for r in results
+        if r.get("metadata")
+    ]
+    context = "\n\n".join(texts)
+    if not context.strip():
+        return "No relevant content found in the documents."
+    prompt = (
+        f"You are a helpful assistant. Answer the question based only on the "
+        f"context provided below.\n\n"
+        f"Question: {query}\n\n"
+        f"Context:\n{context}\n\n"
+        f"Answer:"
+    )
+    response = _llm.invoke([prompt])
+    return response.content
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
@@ -56,7 +83,7 @@ def query():
 
     start = time.time()
 
-    # Retrieve relevant chunks
+    # Retrieve relevant chunks for source display
     raw_results = _store.query(user_query, top_k=top_k)
     sources = []
     for r in raw_results:
@@ -66,9 +93,9 @@ def query():
             "distance": float(r.get("distance", 0)),
         })
 
-    # Generate LLM summary
+    # Generate LLM answer
     try:
-        answer = _rag.search_and_summarize(user_query, top_k=top_k)
+        answer = _summarize(user_query, top_k=top_k)
     except Exception as e:
         answer = f"[LLM error] {e}"
 
@@ -83,4 +110,4 @@ def query():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
